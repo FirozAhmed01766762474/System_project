@@ -1,0 +1,174 @@
+#include<math.h>
+#include <OneWire.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#define ONE_WIRE_BUS    A1
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature sensors(&oneWire);
+float Celcius=0;
+float Fahrenheit=0;
+
+
+const int analogInPin = A0;
+float calibration =21.34;
+int sensorValue = 0;
+unsigned long int avgValue;
+float b;
+int buf[10], temp;
+
+
+
+
+void setup() {
+  pinMode(A1,OUTPUT);
+  digitalWrite(A1,HIGH);
+  pinMode(A0,OUTPUT);
+  digitalWrite(A0,HIGH);
+  pinMode(A2,OUTPUT);
+  digitalWrite(A2,HIGH);
+  Serial.begin(9600);
+  sensors.begin();
+  //Serial.println("START COUNTING PH AND TEMPARATURE");
+}
+
+void loop() {
+
+  for (int i = 0; i < 10; i++) {
+    buf[i] = analogRead(analogInPin);//Read 10 samples  from liquid with delaying 10 milisecond
+    delay(30);
+  }
+ 
+ 
+
+  
+  for (int i = 0; i < 9; i++)//sorting the sample value  ascending order
+  {
+    for (int j = i + 1; j < 10; j++)
+    {
+      if (buf[i] > buf[j])
+      {
+        temp = buf[i];
+        buf[i] = buf[j];
+        buf[j] = temp;//now buffer will store sorted analog value of samples 
+      }
+    }
+  }
+
+
+  avgValue = 0;
+  for (int i = 2; i < 9; i++)
+    avgValue += buf[i];
+  float pHVol = (float)avgValue * 5.0 / 1024 / 10;//convert analog to digital  6 is beacause 6 central samples takes 
+  float phValue = -5.70 * pHVol + calibration;//linear equation 
+  float POH=14-phValue;
+  double h=phValue;
+  int  base=10;
+  double Con_H=pow(base,-h);
+  double Con_OH=pow(base,-POH);
+  double mole_h2o=0;
+  mole_h2o=Con_H+Con_OH;
+  mole_h2o=2*mole_h2o;
+  double O2=32*mole_h2o*1000;
+  
+  
+  
+  
+  if(phValue>7 && phValue<=10)
+  {
+   
+    Serial.println(phValue);
+    
+    Serial.println(POH);
+   
+    //Serial.print(Con_H,6);
+    //Serial.print("\t");
+    //Serial.print("[OH+]is:");
+    //Serial.println(Con_OH,7);
+    //Serial.println("Liquid has less base quality");
+    
+  }
+  else if(phValue>11 && phValue<=14)
+  {
+   // Serial.print(" PH is:");
+    Serial.println(phValue);
+    //Serial.print("\t");
+    //Serial.print(" POH is:");
+    Serial.println(POH);
+    //Serial.print("\t");
+    //Serial.print("[H+]is:");
+//    Serial.print(Con_H,9);
+//     Serial.print("\t");
+//    Serial.print("[OH+]is:");
+//    Serial.println(Con_H,6);//after 7 digit will take
+//    Serial.println("Liquid has much base quality");
+    
+  }
+  else if(phValue>=1 && phValue <=4)
+  {
+    //Serial.print(" PH is:");
+    Serial.println(phValue);
+    //Serial.print("\t");
+    //Serial.print(" POH is:");
+    Serial.println(POH);
+//    Serial.print("\t");
+//    Serial.print("[H+]is:");
+//    Serial.print(Con_H,6);
+//    Serial.print("\t");
+//    Serial.print("[OH+]is:");
+//    Serial.println(Con_H,9);
+//    Serial.println("Liquid is more acidic");
+   
+  }
+  else if(phValue>4 && phValue<7)
+  {
+    //Serial.print(" PH is:");
+    Serial.println(phValue);
+    //Serial.print("\t");
+    //Serial.print(" POH is:");
+    Serial.println(POH);
+    //Serial.print("\t");
+//    Serial.print("[H+]is:");
+//    Serial.print(Con_H,6);
+//    Serial.print("\t");
+//    Serial.print("[OH+]is:");
+//    Serial.println(Con_OH,10);
+//    Serial.println("Liquid is less acidic");
+   
+  }
+  else if(phValue==7)
+  {
+    //Serial.print(" PH is:");
+    Serial.println(phValue);
+   // Serial.print("\t");
+    //Serial.print(" POH is:");
+    Serial.println(POH);
+//    Serial.print("\t");
+//    Serial.print("[H+]is:");
+//    Serial.print(Con_H,7);
+//    Serial.print("\t");
+//    Serial.print("[OH+]is:");
+//    Serial.println(Con_OH,7);
+//    Serial.println("Liquid is Noraml");
+    
+  }
+  
+  sensors.requestTemperatures(); 
+  Celcius=sensors.getTempCByIndex(0);
+  Fahrenheit=sensors.toFahrenheit(Celcius);
+  //Serial.print(" C  ");
+  Serial.println(Celcius);
+  int val = analogRead(A2);
+  Serial.println(O2,7);
+  delay(1000);
+  Serial.println(val);
+  delay(1000);
+  
+  //Serial.print(" F  ");
+  //Serial.println(Fahrenheit);
+  //Serial.print("\n");
+  //Serial.print("\n");
+  delay(2000);
+
+ 
+  
+}
